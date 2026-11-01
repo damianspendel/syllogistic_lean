@@ -16,3 +16,8 @@ globs = ["Solutions.+"]
 [[lean_exe]]
 name = "export"
 root = "Export"
+
+[[lean_exe]]
+name = "extract"
+root = "Extract"
+supportInterpreter = true

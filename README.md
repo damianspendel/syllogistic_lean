@@ -70,7 +70,7 @@ Stretch goals (no solutions supplied):
 
 ```bash
 lake exe export > site/data.json
-python3 scripts/build_site.py https://github.com/<you>/syllogistic
+python3 scripts/build_site.py https://github.com/damianspendel/syllogistic_lean
 ```
 
 ## References
