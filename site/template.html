@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 256 Syllogisms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: mood grid (4 figures × 64) on the left, inspector with Venn diagram on the right */
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #5d6878;
+  --line: #d3d8df;
+  --valid: #2f5fa7;
+  --valid-ink: #ffffff;
+  --import: #c9902a;
+  --import-ink: #1b2330;
+  --invalid: #e3e7ec;
+  --invalid-ink: #6f7a89;
+  --shade: #9aa5b4;
+  --dot: #b4442f;
+  --font-display: "IBM Plex Serif", Georgia, serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --surface: #1a2029; --ink: #e5e9ef; --muted: #9aa4b2; --line: #2c3440;
+    --valid: #5b8ed8; --valid-ink: #0e1218; --import: #d9a441; --import-ink: #0e1218;
+    --invalid: #232a35; --invalid-ink: #7d8796; --shade: #4a5566; --dot: #e0715a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --surface: #1a2029; --ink: #e5e9ef; --muted: #9aa4b2; --line: #2c3440;
+  --valid: #5b8ed8; --valid-ink: #0e1218; --import: #d9a441; --import-ink: #0e1218;
+  --invalid: #232a35; --invalid-ink: #7d8796; --shade: #4a5566; --dot: #e0715a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); }
+main { max-width: 1240px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 24px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; line-height: 1.15; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.05rem; }
+p { margin: 0; max-width: 65ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+a { color: var(--valid); }
+header { display: grid; gap: 12px; }
+.lede { color: var(--muted); font-size: 1.05rem; }
+.bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+.stats { display: flex; gap: 20px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.stat b { font-family: var(--font-display); font-size: 1.5rem; display: block; line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 0.85rem; }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.toggle button { font: 500 0.9rem var(--font-body); border: 0; background: none; color: var(--ink); padding: 8px 14px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.toggle button:focus-visible, .cell:focus-visible { outline: 2px solid var(--dot); outline-offset: 2px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.grid-wrap { overflow-x: auto; }
+.figures { display: grid; grid-template-columns: repeat(4, auto); gap: 18px; width: max-content; }
+.fig h3 { margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; }
+.fig h3 small { font: 400 0.78rem var(--font-mono); color: var(--muted); }
+.cells { display: grid; grid-template-columns: repeat(4, 34px); gap: 3px; }
+.cell { font: 600 0.68rem var(--font-mono); height: 24px; border: 0; border-radius: 4px; cursor: pointer; background: var(--invalid); color: var(--invalid-ink); padding: 0; }
+.cell.valid { background: var(--valid); color: var(--valid-ink); }
+.cell.import { background: var(--import); color: var(--import-ink); }
+.cell.sel { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; color: var(--muted); font-size: 0.85rem; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.inspector { display: grid; gap: 14px; position: sticky; top: 16px; }
+.title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pill { font: 600 0.75rem var(--font-body); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.pill.valid { background: var(--valid); color: var(--valid-ink); }
+.pill.import { background: var(--import); color: var(--import-ink); }
+.pill.invalid { background: var(--invalid); color: var(--invalid-ink); }
+.argument { display: grid; gap: 2px; font-family: var(--font-display); font-size: 1.02rem; }
+.argument .concl { border-top: 1px solid var(--ink); margin-top: 4px; padding-top: 4px; }
+.argument .tag { font: 400 0.75rem var(--font-mono); color: var(--muted); margin-right: 8px; }
+canvas { width: 100%; max-width: 340px; aspect-ratio: 1; display: block; margin: 0 auto; }
+.explain { color: var(--muted); font-size: 0.9rem; }
+.explain strong { color: var(--ink); font-weight: 600; }
+.recipe { display: grid; gap: 4px; font-size: 0.9rem; }
+.recipe .letters { font: 600 1.1rem var(--font-mono); letter-spacing: 0.04em; }
+.recipe .letters b { color: var(--dot); }
+.verify { display: grid; gap: 14px; }
+.verify pre { margin: 0; overflow-x: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font: 0.82rem/1.5 var(--font-mono); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+footer { color: var(--muted); font-size: 0.85rem; }
+@media (prefers-reduced-motion: no-preference) { .cell { transition: transform 80ms; } .cell:hover { transform: scale(1.08); } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>The 256 Syllogisms</h1>
+    <p class="lede">Every categorical syllogism in all four figures, classified. Each verdict comes from a Lean 4 proof checked by the kernel: valid moods by a general theorem, invalid ones by a counter-model drawn below.</p>
+    <div class="bar">
+      <div class="stats" id="stats"></div>
+      <div class="toggle" role="group" aria-label="Semantics">
+        <button type="button" id="btn-trad" aria-pressed="true">Aristotle (terms non-empty)</button>
+        <button type="button" id="btn-modern" aria-pressed="false">Modern (Boolean)</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-label="All syllogisms">
+      <div class="grid-wrap"><div class="figures" id="figures"></div></div>
+      <div class="legend">
+        <span><i style="background:var(--valid)"></i>Valid in both semantics</span>
+        <span><i style="background:var(--import)"></i>Valid only if terms are non-empty</span>
+        <span><i style="background:var(--invalid)"></i>Invalid</span>
+      </div>
+    </section>
+
+    <aside class="panel inspector" id="inspector" aria-live="polite"></aside>
+  </div>
+
+  <section class="panel verify">
+    <h2>How it is verified</h2>
+    <div class="cols">
+      <div style="display:grid;gap:8px">
+        <h3>Venn diagrams decide validity</h3>
+        <p>For three terms a model can only tell us which of the eight regions are inhabited, so there are 2⁸ = 256 Venn models. The library proves that validity over every model on every type equals validity over these 256. The kernel then evaluates all 256 × 256 cases.</p>
+      </div>
+      <div style="display:grid;gap:8px">
+        <h3>Aristotle's proof system matches</h3>
+        <p>Barbara and Celarent as axioms, three conversion rules and reductio. The exercises prove this system sound and derive all 24 moods, so it proves exactly the valid syllogisms (Corcoran 1972, Smiley 1973).</p>
+      </div>
+    </div>
+<pre>theorem valid_iff_vennValid (ei : Bool) (σ : Syllogism) :
+    Valid ei σ ↔ vennValid ei σ = true
+
+theorem trad_classification :
+    ∀ σ ∈ allSyllogisms, TradValid σ ↔ σ ∈ traditionalMoods      -- 24
+
+theorem modern_classification :
+    ∀ σ ∈ allSyllogisms, ModernValid σ ↔ σ ∈ modernMoods         -- 15
+
+theorem provable_iff_valid :                                     -- Exercise 5
+    ∀ σ ∈ allSyllogisms, Provable σ ↔ TradValid σ</pre>
+  </section>
+
+  <footer>Data generated by <code>lake exe export</code> from the same <code>Venn.counter</code> function the metatheorem is about. Lean 4.35.0, no Mathlib. <span id="repo"></span></footer>
+</main>
+
+<script>
+const DATA = /*DATA*/[];
+const REPO = "/*REPO*/";
+const FIGS = ["", "M–P, S–M", "P–M, S–M", "M–P, M–S", "P–M, M–S"];
+let semantics = "trad";
+let current = location.hash.slice(1) || "AAI-3";
+
+const byCode = Object.fromEntries(DATA.map(d => [d.code, d]));
+if (!byCode[current]) current = "AAI-3";
+
+function status(d) {
+  if (d.modern) return "valid";
+  if (d.trad) return semantics === "trad" ? "import" : "invalid";
+  return "invalid";
+}
+
+function renderStats() {
+  const n = DATA.filter(d => semantics === "trad" ? d.trad : d.modern).length;
+  document.getElementById("stats").innerHTML =
+    `<div class="stat"><b>256</b><span>syllogisms</span></div>` +
+    `<div class="stat"><b>${n}</b><span>valid (${semantics === "trad" ? "Aristotle" : "modern"})</span></div>` +
+    `<div class="stat"><b>${256 - n}</b><span>refuted by counter-model</span></div>`;
+}
+
+function renderGrid() {
+  const root = document.getElementById("figures");
+  root.innerHTML = "";
+  for (let f = 1; f <= 4; f++) {
+    const fig = document.createElement("div");
+    fig.className = "fig";
+    fig.innerHTML = `<h3>Figure ${f} <small>${FIGS[f]}</small></h3>`;
+    const cells = document.createElement("div");
+    cells.className = "cells";
+    DATA.filter(d => d.fig === f).forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "cell " + status(d) + (d.code === current ? " sel" : "");
+      b.textContent = d.code.slice(0, 3);
+      b.title = (d.name ? d.name + " · " : "") + d.code;
+      b.setAttribute("aria-label", b.title);
+      b.addEventListener("click", () => { location.hash = d.code; });
+      cells.appendChild(b);
+    });
+    fig.appendChild(cells);
+    root.appendChild(fig);
+  }
+}
+
+const FORM_TEXT = {
+  A: (s, p) => `Every ${s} is ${p}`,
+  E: (s, p) => `No ${s} is ${p}`,
+  I: (s, p) => `Some ${s} is ${p}`,
+  O: (s, p) => `Some ${s} is not ${p}`,
+};
+const say = c => FORM_TEXT[c.f](c.s, c.p);
+
+// Region index = 4·S + 2·M + P
+const inT = (idx, t) => t === "S" ? (idx >> 2) & 1 : t === "M" ? (idx >> 1) & 1 : idx & 1;
+function emptied(c) {
+  // regions a universal premise declares empty
+  const out = [];
+  for (let r = 0; r < 8; r++) {
+    if (c.f === "A" && inT(r, c.s) && !inT(r, c.p)) out.push(r);
+    if (c.f === "E" && inT(r, c.s) && inT(r, c.p)) out.push(r);
+  }
+  return out;
+}
+
+const CIRCLES = { S: [0.37, 0.40], P: [0.63, 0.40], M: [0.50, 0.63] };
+const RAD = 0.25;
+function regionAt(x, y) {
+  let r = 0, any = false;
+  for (const [t, bit] of [["S", 4], ["M", 2], ["P", 1]]) {
+    const [cx, cy] = CIRCLES[t];
+    if ((x - cx) ** 2 + (y - cy) ** 2 < RAD * RAD) { r |= bit; any = true; }
+  }
+  return r;
+}
+
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function hexToRgb(h) {
+  h = h.replace("#", "");
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+}
+
+function drawVenn(canvas, shaded, inhabited) {
+  const N = 340, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = N * dpr; canvas.height = N * dpr;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width;
+  const img = ctx.createImageData(W, W);
+  const shade = hexToRgb(cssVar("--shade"));
+  const surf = hexToRgb(cssVar("--surface"));
+  const sums = Array.from({ length: 8 }, () => [0, 0, 0]);
+  for (let py = 0; py < W; py++) for (let px = 0; px < W; px++) {
+    const r = regionAt(px / W, py / W);
+    const k = (py * W + px) * 4;
+    const col = shaded.has(r) ? shade : surf;
+    img.data[k] = col[0]; img.data[k + 1] = col[1]; img.data[k + 2] = col[2]; img.data[k + 3] = 255;
+    sums[r][0] += px; sums[r][1] += py; sums[r][2]++;
+  }
+  ctx.putImageData(img, 0, 0);
+  ctx.scale(W, W);
+  ctx.lineWidth = 2 / W;
+  ctx.strokeStyle = cssVar("--ink");
+  for (const t of ["S", "M", "P"]) {
+    const [cx, cy] = CIRCLES[t];
+    ctx.beginPath(); ctx.arc(cx, cy, RAD, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.fillStyle = cssVar("--ink");
+  ctx.font = `600 ${18 / N}px ${cssVar("--font-display")}`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("S", 0.17, 0.17); ctx.fillText("P", 0.83, 0.17); ctx.fillText("M", 0.5, 0.95);
+  ctx.fillStyle = cssVar("--dot");
+  for (const r of inhabited) {
+    if (r === 0) { ctx.beginPath(); ctx.arc(0.08, 0.92, 0.022, 0, Math.PI * 2); ctx.fill(); continue; }
+    const [sx, sy, n] = sums[r];
+    ctx.beginPath(); ctx.arc(sx / n / W, sy / n / W, 0.022, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+const LETTER = {
+  s: "convert the preceding proposition simply",
+  p: "convert the preceding proposition per accidens",
+  m: "swap the premises",
+  c: "prove by reductio (per contradictionem)",
+};
+const TARGET = { B: "Barbara", C: "Celarent", D: "Darii", F: "Ferio" };
+
+function recipe(name) {
+  const lower = name.toLowerCase();
+  const steps = [`<b>${name[0]}</b>: reduce to ${TARGET[name[0]]}`];
+  let html = `<span class="letters">`;
+  let vowelsSeen = 0;
+  for (let i = 0; i < name.length; i++) {
+    const ch = lower[i];
+    const isVowel = "aeio".includes(ch);
+    if (isVowel) vowelsSeen++;
+    const meaningful = i === 0 || (!isVowel && LETTER[ch] && "aeio".includes(lower[i - 1]) && vowelsSeen <= 3);
+    html += meaningful ? `<b>${name[i]}</b>` : name[i];
+    if (i > 0 && meaningful) {
+      const which = ["major premise", "minor premise", "conclusion"][vowelsSeen - 1];
+      steps.push(`<b>${ch}</b>: ${ch === "s" || ch === "p" ? LETTER[ch].replace("the preceding proposition", "the " + which) : LETTER[ch]}`);
+    }
+  }
+  html += `</span>`;
+  return html + `<div>${steps.join("<br>")}</div>`;
+}
+
+function renderInspector() {
+  const d = byCode[current];
+  const st = status(d);
+  const valid = semantics === "trad" ? d.trad : d.modern;
+  const cm = semantics === "trad" ? d.cmTrad : d.cmModern;
+  const label = st === "valid" ? "Valid" : st === "import" ? "Valid with existential import" : "Invalid";
+  const shaded = new Set();
+  if (valid) { emptied(d.major).forEach(r => shaded.add(r)); emptied(d.minor).forEach(r => shaded.add(r)); }
+  const inhabited = [];
+  if (!valid) for (let r = 0; r < 8; r++) if ((cm >> r) & 1) inhabited.push(r);
+  if (!valid && inhabited.length === 0) inhabited.push(0);
+
+  let explain;
+  if (valid) {
+    explain = `<strong>Shaded regions</strong> are emptied by the universal premises. In all 256 Venn models where both premises hold${semantics === "trad" ? " and S, M, P are non-empty" : ""}, the conclusion holds too.`;
+    if (st === "import") explain += ` Drop the non-emptiness assumption (switch to Modern) and a counter-model appears.`;
+  } else if (cm === 0) {
+    explain = `<strong>Counter-model: every region empty.</strong> With no S, M or P at all, universal premises are vacuously true but "${say(d.concl)}" is false. Only modern semantics allows this.`;
+  } else {
+    const regionName = r => ["S", "M", "P"].map(t => (inT(r, t) ? "" : "not-") + t).join(" ∧ ");
+    explain = `<strong>Counter-model</strong> (smallest found): dots mark the inhabited regions, everything else is empty. Inhabited: ${inhabited.map(r => `<span class="mono">${regionName(r)}</span>`).join(", ")}. Both premises are true here and the conclusion is false.`;
+  }
+
+  document.getElementById("inspector").innerHTML = `
+    <div class="title-row">
+      <h2>${d.name || d.code}</h2>
+      <span class="pill ${st}">${label}</span>
+    </div>
+    <div class="explain mono">${d.code} · Figure ${d.fig}</div>
+    <div class="argument">
+      <div><span class="tag">major</span>${say(d.major)}</div>
+      <div><span class="tag">minor</span>${say(d.minor)}</div>
+      <div class="concl"><span class="tag">∴</span>${say(d.concl)}</div>
+    </div>
+    <canvas id="venn" role="img" aria-label="Venn diagram of S, M and P"></canvas>
+    <p class="explain">${explain}</p>
+    ${d.name && d.fig > 1 ? `<div class="recipe"><h3>Reading the name</h3>${recipe(d.name)}<div class="explain">Do it in Lean: <code>${d.name.toLowerCase()}_prov</code> in Exercise ${d.fig === 1 ? 3 : 4}.</div></div>` : ""}
+    ${d.name && d.fig === 1 ? `<div class="explain">First figure. Barbara and Celarent are axioms; the other four are derived in Exercise 3 (<code>${d.name.toLowerCase()}_prov</code>).</div>` : ""}
+  `;
+  drawVenn(document.getElementById("venn"), shaded, inhabited);
+}
+
+function render() {
+  document.getElementById("btn-trad").setAttribute("aria-pressed", semantics === "trad");
+  document.getElementById("btn-modern").setAttribute("aria-pressed", semantics === "modern");
+  renderStats(); renderGrid(); renderInspector();
+}
+
+document.getElementById("btn-trad").addEventListener("click", () => { semantics = "trad"; render(); });
+document.getElementById("btn-modern").addEventListener("click", () => { semantics = "modern"; render(); });
+window.addEventListener("hashchange", () => {
+  const h = location.hash.slice(1);
+  if (byCode[h]) { current = h; render(); }
+});
+if (REPO && !REPO.startsWith("/*")) document.getElementById("repo").innerHTML = `Source: <a href="${REPO}">${REPO.replace("https://", "")}</a>`;
+render();
+</script>
+</body>
+</html>

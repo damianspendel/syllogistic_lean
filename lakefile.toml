@@ -1,0 +1,18 @@
+name = "Syllogistic"
+version = "0.1.0"
+defaultTargets = ["Syllogistic"]
+
+[[lean_lib]]
+name = "Syllogistic"
+
+[[lean_lib]]
+name = "Exercises"
+globs = ["Exercises.+"]
+
+[[lean_lib]]
+name = "Solutions"
+globs = ["Solutions.+"]
+
+[[lean_exe]]
+name = "export"
+root = "Export"
